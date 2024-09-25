@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "streamlit-test"
+version = "0.1.0"
+description = ""
+authors = ["year <sainknight87@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+streamlit = "^1.38.0"
+panda = "^0.3.1"
+pandas = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
