@@ -3,35 +3,52 @@ import pandas as pd
 import re
 import ast
 
-# 데이터 불러오기
-df = pd.read_csv("data/c2d2_0924_final.csv")
-df['Distorted part'] = df['Distorted part'].apply(ast.literal_eval)
-
 # Streamlit UI 설정
 st.title('Thought 문장유사도평균에 따른 이야기 선택')
 
+# 어떤 데이터를 불러오는지 확인할 드롭다운 메뉴 생성
+data_select = st.selectbox('데이터를 선택해주셈', ['c2d2_0924_final.csv', 'annotated_change.csv'])
+print(data_select)
+
+# 데이터 불러오기
+df = pd.read_csv(f"data/{data_select}")
+
+# 데이터프레임에서 'Distorted part'가 문자열 내 리스트로 저장되어 있는 경우 ex) '[텍스트]' -> 리스트로 변환
+df['Distorted part'] = df['Distorted part'].apply(ast.literal_eval)
+
 # 데이터프레임에서 'Thought_문장유사도평균'이 숫자형이 아닌 경우 처리
-df['Thought_문장유사도평균'] = pd.to_numeric(df['Thought_문장유사도평균'], errors='coerce')
+df['Distorted_문장유사도평균'] = pd.to_numeric(df['Distorted_문장유사도평균'], errors='coerce')
 
 # NaN 값 제거 및 Thought_문장유사도평균 오름차순 정렬
-df_sorted = df.dropna(subset=['Thought_문장유사도평균']).sort_values(by='Thought_문장유사도평균', ascending=True)
+df_sorted = df.dropna(subset=['Distorted_문장유사도평균']).sort_values(by='Distorted_문장유사도평균', ascending=True)
 
-# Thought_문장유사도평균을 기준으로 드롭다운 메뉴 생성
-selected_value = st.selectbox('Select a story based on Thought_문장유사도평균:', df_sorted['Thought_문장유사도평균'].unique())
+# 드롭다운 메뉴에 표시할 항목 생성 (Distorted part 앞부분 + Thought_문장유사도평균)
+# df_sorted['Dropdown_label'] = df_sorted['Distorted part'].apply(lambda x: x[0][:30] + '...' if len(x[0]) > 30 else x[0]) + ' (' + df_sorted['Distorted_문장유사도평균'].astype(str) + ')'
+# 드롭다운 메뉴에 표시할 항목 생성 (Distorted part 앞부분 + Thought_문장유사도평균)
+df_sorted['Dropdown_label'] = df_sorted['Distorted part'].apply(
+    lambda x: (x[0][:30] + '...' if len(x[0]) > 30 else x[0]) if len(x) > 0 else 'No Distortion Part'
+) + ' (' + df_sorted['Distorted_문장유사도평균'].astype(str) + ')'
 
-# 선택한 평균 유사도에 해당하는 행 가져오기
-selected_row = df_sorted[df_sorted['Thought_문장유사도평균'] == selected_value].iloc[0]
+
+# 드롭다운 메뉴 생성
+selected_value = st.selectbox('Select a story based on Distorted part and Distorted_문장유사도평균:', df_sorted['Dropdown_label'].unique())
+
+# 선택한 항목에 해당하는 행 가져오기
+selected_row = df_sorted[df_sorted['Dropdown_label'] == selected_value].iloc[0]
 
 # 선택된 이야기 및 세부 정보 표시
 st.subheader("Selected Story 정보")
 st.write("**Story:**", selected_row['story'])
 st.write("**Distorted part:**", selected_row['Distorted part'])
 st.write("**Label:**", selected_row['label'])
-st.write("**원데이터_scenario:**", selected_row['원데이터_scenario'])
-st.write("**원데이터_thought:**", selected_row['원데이터_thought'])
-st.write("**Thought_문장분리:**", selected_row['Thought_문장분리'])
-st.write("**Thought_문장유사도:**", selected_row['Thought_문장유사도'])
-st.write("**Thought_문장유사도평균:**", selected_row['Thought_문장유사도평균'])
+st.write("**Distorted_문장분리:**", selected_row['Distorted_문장분리'])
+st.write("**Distorted_문장유사도:**", selected_row['Distorted_문장유사도'])
+st.write("**Distorted_문장유사도평균:**", selected_row['Distorted_문장유사도평균'])
+if data_select == 'annotated_change.csv':
+    st.write("**기존데이터_SecondaryDistortion:**", selected_row['기존데이터_SecondaryDistortion'])
+elif data_select == 'c2d2_0924_final.csv':
+    st.write("**기존데이터_scenario:**", selected_row['기존데이터_scenario'])
+    st.write("**기존데이터_thought:**", selected_row['기존데이터_thought'])
 
 # 하이라이트
 st.subheader("Selected Story 하이라이트")
@@ -53,4 +70,3 @@ highlight_color = st.color_picker('Pick a highlight color for this story', '#ffc
 # 하이라이트된 story 표시
 highlighted_story = highlight_text(selected_row['story'], selected_row['Distorted part'], highlight_color)
 st.markdown(highlighted_story, unsafe_allow_html=True)
-
