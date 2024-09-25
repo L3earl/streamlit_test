@@ -8,7 +8,6 @@ st.title('Thought 문장유사도평균에 따른 이야기 선택')
 
 # 어떤 데이터를 불러오는지 확인할 드롭다운 메뉴 생성
 data_select = st.selectbox('데이터를 선택해주셈', ['c2d2_0924_final.csv', 'annotated_change.csv'])
-print(data_select)
 
 # 데이터 불러오기
 df = pd.read_csv(f"data/{data_select}")
