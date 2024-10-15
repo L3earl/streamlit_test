@@ -3,6 +3,21 @@ import pandas as pd
 import re
 import ast
 
+# Define a safe version of ast.literal_eval
+def safe_literal_eval(val):
+    if pd.isnull(val):
+        return []  # Return an empty list if the value is NaN
+    if isinstance(val, str):
+        try:
+            return ast.literal_eval(val)
+        except (ValueError, SyntaxError):
+            return []  # Return an empty list if parsing fails
+    elif isinstance(val, list):
+        return val  # If it's already a list, return it as is
+    else:
+        return []  # For any other type, return an empty list
+
+
 # Streamlit UI 설정
 st.title('Thought 문장유사도평균에 따른 이야기 선택')
 
@@ -13,7 +28,8 @@ data_select = st.selectbox('데이터를 선택해주셈', ['c2d2_0924_final.csv
 df = pd.read_csv(f"data/{data_select}")
 
 # 데이터프레임에서 'Distorted part'가 문자열 내 리스트로 저장되어 있는 경우 ex) '[텍스트]' -> 리스트로 변환
-df['Distorted part'] = df['Distorted part'].apply(ast.literal_eval)
+# df['Distorted part'] = df['Distorted part'].apply(ast.literal_eval)
+df['Distorted part'] = df['Distorted part'].apply(safe_literal_eval)
 
 # 데이터프레임에서 'Thought_문장유사도평균'이 숫자형이 아닌 경우 처리
 df['Distorted_문장유사도평균'] = pd.to_numeric(df['Distorted_문장유사도평균'], errors='coerce')
